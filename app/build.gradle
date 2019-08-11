@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'jacoco'
 
 android {
     compileSdkVersion 28
@@ -43,4 +44,37 @@ dependencies {
     testImplementation 'androidx.test.ext:junit:1.1.1'
     testImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     testImplementation 'org.robolectric:robolectric:4.3'
+}
+
+jacoco {
+    reportsDir = file("${buildDir}/reports")
+}
+
+// 안드로이드 테스트 커버리지 측정을 가능하게 한다.
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+task coverageReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
+    group = 'Reporting'
+    description = 'Generate Jacoco coverage reports'
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilters = [
+            '**/R.class',
+            '**/R$*.class',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            'com/android/**/*.class'
+    ]
+    def javaDebugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug", excludes: fileFilters)
+    def kotlinDebugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilters)
+
+    sourceDirectories = files(['src/main/java'])
+    classDirectories = files([javaDebugTree, kotlinDebugTree])
+    executionData = files("${buildDir}/jacoco/testDebugUnitTest.exec")
 }
