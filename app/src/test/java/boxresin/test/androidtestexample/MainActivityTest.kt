@@ -2,11 +2,13 @@ package boxresin.test.androidtestexample
 
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.clearText
-import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.mockk.coVerify
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import org.hamcrest.Matchers.not
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,5 +54,26 @@ class MainActivityTest {
 
         // Then: 로그인 버튼이 활성화되어야 한다.
         onView(withId(R.id.btn_login)).check(matches(not(isEnabled())))
+    }
+
+    /** 로그인 테스트 */
+    @Test
+    fun loginTest() {
+        mockkObject(LoginApi)
+
+        // Given: 메인 액티비티 실행
+        ActivityScenario.launch(MainActivity::class.java)
+
+        // Given: 아이디, 비밀번호를 입력한 상태
+        onView(withId(R.id.edit_id)).perform(typeText("hello"))
+        onView(withId(R.id.edit_password)).perform(typeText("world"))
+
+        // When: 로그인 버튼 클릭할 때
+        onView(withId(R.id.btn_login)).perform(click())
+
+        // Then: 로그인 API를 호출해야 한다.
+        coVerify { LoginApi.login(id = "hello", password = "world") }
+
+        unmockkObject(LoginApi)
     }
 }
